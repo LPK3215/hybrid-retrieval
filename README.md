@@ -1,7 +1,7 @@
-# D04 · 混合检索实验台（Hybrid Retrieval Bench）
+# 混合检索实验台（Hybrid Retrieval Bench）
 
 > 一个可离线复现的 Hybrid Retrieval 实验与演示平台：稠密向量（Chroma）+ 稀疏关键词（rank_bm25/jieba）双路召回，RRF 融合，bge-reranker-base 交叉编码器重排，配 20 条人工标注测试集、五组工程探针与毫秒级时延口径。
-> 定位：Agent 专项 D04 模块的落地实现，代码、实验数据与工具形态三者齐备。
+> 定位：Agent 专项「文档处理与 RAG」模块混合检索实验的落地实现，代码、实验数据与工具形态三者齐备。
 
 ## 一、它是什么
 

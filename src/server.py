@@ -1,4 +1,4 @@
-"""server.py —— D04 混合检索工具网关。
+"""server.py —— 混合检索工具网关。
 
 端点：
   GET  /                  → 前端单页（static/index.html）
@@ -23,7 +23,7 @@ from . import config, corpus
 from .index import BM25Index, VectorIndex
 from .retriever import HybridRetriever
 
-app = FastAPI(title="D04 混合检索工具网关", version="1.0.0", docs_url=None, redoc_url=None)
+app = FastAPI(title="混合检索工具网关", version="1.0.0", docs_url=None, redoc_url=None)
 
 _retr = None
 _reranker = None

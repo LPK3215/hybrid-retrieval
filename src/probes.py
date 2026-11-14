@@ -192,7 +192,7 @@ EMBED_PROBE_MODES = ("vector", "rrf", "rrf_rerank")
 
 
 def probe_embedding(queries, blocks, out_dir, tags=None):
-    """中文专用 embedding 对照（D04 后续实验）。
+    """中文专用 embedding 对照（本实验后续探针）。
 
     换嵌入必然重建向量索引，故每个模型一个独立 collection（corpus-embed-<tag>）；
     BM25 索引、重排器与嵌入无关，全程共用一份。查询侧前缀只对 bge-small-zh 生效。
