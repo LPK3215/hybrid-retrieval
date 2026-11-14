@@ -1,0 +1,21 @@
+# 模型密钥与本地状态
+.env
+__pycache__/
+*.pyc
+
+# 索引与重建产物（可重建，不入库）
+data/chroma/
+data/bm25.pkl
+data/blocks.json
+data/*.log
+data/*.txt
+
+# 实验产物：默认不入库；final 系列与 embedding 对照是文档引用的权威数据，点名放行
+runs/*
+!runs/analysis_failures.md
+!runs/20261114-final-bench/
+!runs/20261114-final-bench/**
+!runs/20261114-final-probes/
+!runs/20261114-final-probes/**
+!runs/20261114-embed-probe/
+!runs/20261114-embed-probe/**

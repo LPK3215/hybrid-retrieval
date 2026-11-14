@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D04 混合检索 · 本地工具网关</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #1c2333;
+    --ink-2: #5a6478;
+    --line: #e6e9f2;
+    --brand-1: #4f46e5;
+    --brand-2: #7c3aed;
+    --gold: #d97706;
+    --gold-bg: #fef3c7;
+    --ok: #059669;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -12px rgba(16,24,40,.18);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  header.hero {
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+    border-radius: var(--radius);
+    color: #fff;
+    padding: 26px 30px;
+    box-shadow: var(--shadow);
+  }
+  header.hero h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+  header.hero p { color: rgba(255,255,255,.82); font-size: 13px; margin-top: 6px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .badge {
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.22);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-top: 18px;
+  }
+  .search-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .search-row input[type=text] {
+    flex: 1 1 420px;
+    min-width: 260px;
+    padding: 12px 16px;
+    font-size: 15px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search-row input[type=text]:focus { border-color: var(--brand-1); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+  select {
+    padding: 11px 12px;
+    font-size: 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn {
+    padding: 12px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .1s, opacity .15s;
+  }
+  .btn:hover { opacity: .92; }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+  .chips .label { font-size: 12px; color: var(--ink-2); margin-right: 2px; }
+  .chip {
+    padding: 5px 12px;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fafbff;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--brand-1); color: var(--brand-1); background: #eef2ff; }
+  .chip.exact { border-left: 3px solid #0ea5e9; }
+  .chip.semantic { border-left: 3px solid #8b5cf6; }
+
+  .goldbar {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--gold-bg);
+    border: 1px solid #fde68a;
+    font-size: 13px;
+    color: #92400e;
+  }
+  .goldbar.show { display: block; }
+  .goldbar b { color: var(--gold); }
+
+  .metrics { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .metric {
+    flex: 1 1 110px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .metric .k { font-size: 12px; color: var(--ink-2); }
+  .metric .v { font-size: 20px; font-weight: 700; font-family: ui-monospace, Consolas, monospace; }
+  .metric .v.hi { color: var(--ok); }
+
+  .results { margin-top: 18px; }
+  .results h2 { font-size: 16px; margin-bottom: 12px; color: var(--ink); }
+  .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  .grid.compare { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .col-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .col-head .lat { font-weight: 400; font-size: 12px; opacity: .9; font-family: ui-monospace, monospace; }
+  .col-head.vector { background: linear-gradient(135deg,#2563eb,#0ea5e9); }
+  .col-head.bm25 { background: linear-gradient(135deg,#059669,#10b981); }
+  .col-head.rrf { background: linear-gradient(135deg,#7c3aed,#a855f7); }
+  .col-head.rrf_rerank { background: linear-gradient(135deg,#ea580c,#f59e0b); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    transition: box-shadow .15s, transform .15s;
+  }
+  .card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .card.vector { border-left-color: #0ea5e9; }
+  .card.bm25 { border-left-color: #10b981; }
+  .card.rrf { border-left-color: #a855f7; }
+  .card.rerank { border-left-color: #f59e0b; }
+  .card.is-gold { border-left-color: var(--gold); background: linear-gradient(0deg, #fffbeb, #fffbeb), var(--card); }
+  .card .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rank {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: #eef2ff; color: var(--brand-1);
+    font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, monospace;
+  }
+  .card .bid { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-2); }
+  .card .score { font-family: ui-monospace, monospace; font-size: 12px; font-weight: 700; color: var(--ink); }
+  .tag {
+    font-size: 11px; padding: 1px 7px; border-radius: 999px;
+    background: #f1f5f9; color: var(--ink-2); border: 1px solid var(--line);
+  }
+  .tag.gold { background: var(--gold-bg); color: var(--gold); border-color: #fde68a; font-weight: 700; }
+  .card .sec { font-size: 12px; color: var(--ink-2); margin-top: 6px; }
+  .card .txt {
+    font-size: 13px; color: #334155; margin-top: 6px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    word-break: break-all;
+  }
+  .empty { color: var(--ink-2); font-size: 14px; padding: 30px 0; text-align: center; }
+
+  footer { margin-top: 26px; color: var(--ink-2); font-size: 12.5px; }
+  footer h3 { font-size: 14px; color: var(--ink); margin-bottom: 8px; }
+  footer table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
+  footer th, footer td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+  footer th { background: #f8fafc; }
+  .loading { display: none; color: var(--ink-2); font-size: 14px; margin-top: 14px; }
+  .loading.show { display: block; }
+  .spin {
+    display: inline-block; width: 14px; height: 14px; margin-right: 6px;
+    border: 2px solid #cbd5e1; border-top-color: var(--brand-1);
+    border-radius: 50%; animation: spin .7s linear infinite;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 640px) {
+    .grid.compare { grid-template-columns: 1fr; }
+    .wrap { padding: 16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>D04 混合检索 · 本地工具网关</h1>
+    <p>向量路 Chroma + 稀疏路 BM25(jieba+领域词) · RRF 融合 · bge-reranker 精排 · 全离线可复现</p>
+    <div class="badges" id="healthBadges">
+      <span class="badge">连接中…</span>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="search-row">
+      <input id="q" type="text" placeholder="输入问题，如：RRF 融合的 k 值默认是多少？" autocomplete="off">
+      <select id="mode">
+        <option value="rrf" selected>RRF 融合</option>
+        <option value="rrf_rerank">RRF + Rerank</option>
+        <option value="vector">仅向量</option>
+        <option value="bm25">仅 BM25</option>
+        <option value="compare">四模式对比</option>
+      </select>
+      <select id="topk">
+        <option value="3">top-3</option>
+        <option value="5" selected>top-5</option>
+        <option value="10">top-10</option>
+      </select>
+      <button class="btn" id="btn">检索</button>
+    </div>
+    <div class="chips" id="chips">
+      <span class="label">示例（来自标注测试集）：</span>
+    </div>
+    <div class="goldbar" id="goldbar"></div>
+    <div class="metrics" id="metrics" style="display:none"></div>
+    <div class="loading" id="loading"><span class="spin"></span>检索中…（首请求需加载本地模型，可能数十秒）</div>
+  </section>
+
+  <section class="results" id="results" style="display:none">
+    <h2 id="resTitle">检索结果</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <footer>
+    <h3>指标口径（对齐总纲 7.10）</h3>
+    <p>固定同一语料、分块、嵌入、测试集与 top-k 口径。Recall@k = gold 命中数 / gold 数；MRR = 首个 gold 命中名次的倒数；nDCG 按二值相关性折损累计。标注集 20 条：12 条精确词 + 8 条语义改写，输入与标注问题一致时自动计算指标并以金色标出 gold 块。</p>
+    <h3 style="margin-top:14px">最近一次离线 bench 汇总</h3>
+    <div id="runSummary" style="color:var(--ink-2)">加载中…</div>
+  </footer>
+
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let QUERIES = [];
+let BLOCKS = [];
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(path + " -> " + r.status);
+  return r.json();
+}
+
+function matchQuery(text) {
+  const t = text.trim();
+  return QUERIES.find(q => q.text.trim() === t) || null;
+}
+
+function recallAt(gold, hits, k) {
+  const g = new Set(gold);
+  const top = hits.slice(0, k).map(h => h.block_id);
+  return [...g].filter(id => top.includes(id)).length / g.size;
+}
+function mrr(gold, hits) {
+  const g = new Set(gold);
+  for (let i = 0; i < hits.length; i++) if (g.has(hits[i].block_id)) return 1 / (i + 1);
+  return 0;
+}
+function ndcg(gold, hits, k) {
+  const g = new Set(gold);
+  let dcg = 0;
+  hits.slice(0, k).forEach((h, i) => { if (g.has(h.block_id)) dcg += 1 / Math.log2(i + 2); });
+  const ideal = Math.min(g.size, k);
+  let idcg = 0;
+  for (let i = 0; i < ideal; i++) idcg += 1 / Math.log2(i + 2);
+  return idcg ? dcg / idcg : 0;
+}
+
+function renderMetrics(q, hitsByMode) {
+  const box = $("metrics");
+  if (!q) { box.style.display = "none"; return; }
+  const kList = [3, 5, 10];
+  let html = `<div class="metric" style="flex:0 0 auto"><div class="k">标注问题 ${esc(q.id)} · ${q.type === "exact" ? "精确词" : "语义改写"}</div>
+    <div class="v" style="font-size:14px">${esc(q.gold.length)} 个 gold 块</div></div>`;
+  const modes = Object.entries(hitsByMode);
+  for (const [mode, hits] of modes) {
+    for (const k of kList) {
+      const v = recallAt(q.gold, hits, k);
+      html += `<div class="metric"><div class="k">Recall@${k} · ${esc(mode)}</div>
+        <div class="v ${v > 0 ? "hi" : ""}">${(v * 100).toFixed(0)}%</div></div>`;
+    }
+    html += `<div class="metric"><div class="k">MRR · ${esc(mode)}</div>
+      <div class="v">${mrr(q.gold, hits).toFixed(3)}</div></div>`;
+    html += `<div class="metric"><div class="k">nDCG@5 · ${esc(mode)}</div>
+      <div class="v">${ndcg(q.gold, hits, 5).toFixed(3)}</div></div>`;
+  }
+  box.innerHTML = html;
+  box.style.display = "flex";
+}
+
+function cardHtml(h, goldSet) {
+  const isGold = goldSet && goldSet.has(h.block_id);
+  const cls = h.source && h.source.startsWith("rrf+rerank") ? "rerank" : (h.source || "").replace("+", " ");
+  return `<div class="card ${cls} ${isGold ? "is-gold" : ""}">
+    <div class="top">
+      <span class="rank">${h.rank}</span>
+      <span class="bid">${esc(h.block_id)}</span>
+      <span class="score">${Number(h.score).toFixed(4)}</span>
+      <span class="tag">${esc(h.source)}</span>
+      ${isGold ? '<span class="tag gold">★ GOLD</span>' : ""}
+    </div>
+    <div class="sec">${esc(h.section || "")}</div>
+    <div class="txt">${esc(h.text)}</div>
+  </div>`;
+}
+
+async function doSearch() {
+  const q = $("q").value.trim();
+  if (!q) return;
+  const mode = $("mode").value;
+  const topK = Number($("topk").value);
+  $("btn").disabled = true;
+  $("loading").classList.add("show");
+  $("results").style.display = "none";
+  $("goldbar").classList.remove("show");
+  $("metrics").style.display = "none";
+
+  const goldQ = matchQuery(q);
+  if (goldQ) {
+    $("goldbar").innerHTML = `该问题在标注测试集中（<b>${esc(goldQ.id)}</b> · ${goldQ.type === "exact" ? "精确词" : "语义改写"}），命中 <b>${goldQ.gold.length}</b> 个 gold 块：<code>${esc(goldQ.gold.join(", "))}</code>`;
+    $("goldbar").classList.add("show");
+  }
+
+  const goldSet = goldQ ? new Set(goldQ.gold) : null;
+  const grid = $("grid");
+
+  try {
+    if (mode === "compare") {
+      $("resTitle").textContent = `四模式对比：${q}`;
+      const modes = ["vector", "bm25", "rrf", "rrf_rerank"];
+      const settled = await Promise.allSettled(
+        modes.map(m => api("/api/search", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q, mode: m, top_k: topK })
+        }))
+      );
+      grid.className = "grid compare";
+      let hitsByMode = {};
+      grid.innerHTML = settled.map((res, i) => {
+        if (res.status !== "fulfilled") {
+          return `<div><div class="col-head ${modes[i]}">${modes[i].toUpperCase()}</div><div class="empty">失败：${esc(String(res.reason))}</div></div>`;
+        }
+        const d = res.value;
+        hitsByMode[modes[i]] = d.results;
+        const headCls = modes[i] === "rrf_rerank" ? "rrf_rerank" : modes[i];
+        return `<div>
+          <div class="col-head ${headCls}"><span>${modes[i].toUpperCase()}</span><span class="lat">${d.lat_ms} ms</span></div>
+          ${d.results.length ? d.results.map(h => cardHtml(h, goldSet)).join("") : '<div class="empty">无结果</div>'}
+        </div>`;
+      }).join("");
+      if (goldQ) renderMetrics(goldQ, hitsByMode);
+    } else {
+      $("resTitle").textContent = `检索结果：${q}`;
+      const d = await api("/api/search", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q, mode, top_k: topK })
+      });
+      grid.className = "grid";
+      grid.innerHTML = d.results.length
+        ? d.results.map(h => cardHtml(h, goldSet)).join("")
+        : '<div class="empty">无结果</div>';
+      if (goldQ) renderMetrics(goldQ, { [mode]: d.results });
+    }
+    $("results").style.display = "block";
+  } catch (e) {
+    grid.className = "grid";
+    grid.innerHTML = `<div class="empty">请求失败：${esc(String(e))}</div>`;
+    $("results").style.display = "block";
+  } finally {
+    $("btn").disabled = false;
+    $("loading").classList.remove("show");
+  }
+}
+
+async function init() {
+  try {
+    const h = await api("/api/health");
+    $("healthBadges").innerHTML =
+      `<span class="badge">${h.blocks} 块已索引</span>` +
+      `<span class="badge">embed: ${esc(h.embed_model)}</span>` +
+      `<span class="badge">rerank: ${esc(h.rerank_model)}</span>` +
+      `<span class="badge">${esc(h.loaded_at)}</span>`;
+  } catch (e) {
+    $("healthBadges").innerHTML = `<span class="badge">离线或索引为空：${esc(String(e))}</span>`;
+  }
+
+  try {
+    const qs = await api("/api/queries");
+    QUERIES = qs.queries || [];
+    const chips = $("chips");
+    QUERIES.slice(0, 6).forEach(qq => {
+      const el = document.createElement("span");
+      el.className = "chip " + (qq.type || "");
+      el.textContent = qq.text.length > 22 ? qq.text.slice(0, 22) + "…" : qq.text;
+      el.title = qq.text;
+      el.onclick = () => { $("q").value = qq.text; doSearch(); };
+      chips.appendChild(el);
+    });
+  } catch (e) { console.warn("queries load failed", e); }
+
+  try {
+    const runs = await api("/api/runs");
+    const box = $("runSummary");
+    if (!runs.runs || !runs.runs.length) { box.textContent = "暂无 bench 记录（先跑 python -m src.cli bench）"; return; }
+    const run = runs.runs[0];
+    const rows = run.summary.map(r =>
+      `<tr><td>${esc(r.type)}</td><td>${esc(r.mode)}</td><td>${r.n}</td>` +
+      `<td>${r["recall@3"] == null ? "-" : (r["recall@3"] * 100).toFixed(1) + "%"}</td>` +
+      `<td>${r["recall@5"] == null ? "-" : (r["recall@5"] * 100).toFixed(1) + "%"}</td>` +
+      `<td>${r["recall@10"] == null ? "-" : (r["recall@10"] * 100).toFixed(1) + "%"}</td>` +
+      `<td>${r.mrr == null ? "-" : r.mrr.toFixed(3)}</td>` +
+      `<td>${r.ndcg == null ? "-" : r.ndcg.toFixed(3)}</td>` +
+      `<td>${r.lat_p50_ms == null ? "-" : r.lat_p50_ms + " ms"}</td></tr>`
+    ).join("");
+    box.innerHTML = `<div style="font-size:12px;color:var(--ink-2);margin-bottom:4px">${esc(run.dir)}</div>
+      <table><thead><tr><th>类型</th><th>模式</th><th>n</th><th>R@3</th><th>R@5</th><th>R@10</th><th>MRR</th><th>nDCG</th><th>p50</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  } catch (e) {
+    $("runSummary").textContent = "读取失败：" + e;
+  }
+}
+
+$("btn").onclick = doSearch;
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+init();
+</script>
+</body>
+</html>

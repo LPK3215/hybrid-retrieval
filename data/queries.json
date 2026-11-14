@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "note": "D04 混合检索标注测试集：12 条精确词（问法含专有名词/参数名/方法名，BM25 强项）+ 8 条语义改写（自然语言转述、不含原文关键词，向量强项）。gold 为人工核对块全文后标注的应命中块；每条 1-3 个 gold。",
+  "queries": [
+    {
+      "id": "q01",
+      "type": "exact",
+      "text": "RRF 融合的 k 值默认是多少？",
+      "gold": ["rag-total-0041", "rag-total-0051"],
+      "note": "0041 给出 k=60 代码与衰减速度解释；0051 讲 k 不是准确率旋钮"
+    },
+    {
+      "id": "q02",
+      "type": "exact",
+      "text": "bge-reranker-base 在重排里怎么用？",
+      "gold": ["rag-total-0054", "rag-total-0055"],
+      "note": "0054 有 FlagReranker 调用代码；0055 是重排模型选型表"
+    },
+    {
+      "id": "q03",
+      "type": "exact",
+      "text": "rank_bm25 的 BM25Okapi 默认参数 k1 和 b 是多少？",
+      "gold": ["rag-total-0047", "rag-total-0040"],
+      "note": "0047 明确 k1=1.5、b=0.75；0040 是 BM25 公式实现"
+    },
+    {
+      "id": "q04",
+      "type": "exact",
+      "text": "Chroma 的 PersistentClient 怎么创建？",
+      "gold": ["chroma-0049", "chroma-0017"],
+      "note": "0049 持久化模式代码；0017 四种客户端模式对比"
+    },
+    {
+      "id": "q05",
+      "type": "exact",
+      "text": "interrupt 恢复时 thread_id 换了会怎样？",
+      "gold": ["flow-control-0033", "flow-control-0047"],
+      "note": "0033 要求同一 thread_id；0047 踩坑清单第 2/12 条"
+    },
+    {
+      "id": "q06",
+      "type": "exact",
+      "text": "Qdrant Docker Compose 的端口映射怎么配？",
+      "gold": ["qdrant-0009", "qdrant-0010"],
+      "note": "0009/0010 是同一段 docker-compose 被切成的两块，都必须命中"
+    },
+    {
+      "id": "q07",
+      "type": "exact",
+      "text": "HyDE 适合什么场景？",
+      "gold": ["rag-total-0044", "rag-total-0081"],
+      "note": "0044 查询侧四种加工表；0081 五种增强表"
+    },
+    {
+      "id": "q08",
+      "type": "exact",
+      "text": "MMR 的 lambda 参数有什么作用？",
+      "gold": ["rag-total-0060", "chroma-0065"],
+      "note": "0060 MMR 代码与 lam 解释；0065 LangChain search_type=mmr 参数"
+    },
+    {
+      "id": "q09",
+      "type": "exact",
+      "text": "LangGraph 的 SqliteSaver 用在什么场景？",
+      "gold": ["flow-control-0031", "flow-control-0052"],
+      "note": "0031 存储四档；0052 D11 实测用 SqliteSaver（durability=sync）"
+    },
+    {
+      "id": "q10",
+      "type": "exact",
+      "text": "Contextual Retrieval 1.9% 的失败率是怎么降下来的？",
+      "gold": ["rag-total-0095", "retrieval-paradigm-0014"],
+      "note": "0095 三段数字表与成本；0014 汇总数字表"
+    },
+    {
+      "id": "q11",
+      "type": "exact",
+      "text": "hnsw:M 参数调大有什么用？",
+      "gold": ["chroma-0022", "chroma-0092"],
+      "note": "0022 HNSW 参数配置；0092 查询慢时调到 32"
+    },
+    {
+      "id": "q12",
+      "type": "exact",
+      "text": "GraphRAG 建图 281 分钟是在什么配置下测的？",
+      "gold": ["rag-total-0098", "retrieval-paradigm-0015"],
+      "note": "0098 给出 600 token 窗口/百万 token/16GB 口径；0015 复述该数字"
+    },
+    {
+      "id": "q13",
+      "type": "semantic",
+      "text": "想在本机离线跑一个向量检索，选哪个库最省心？",
+      "gold": ["chroma-0000", "chroma-0004", "chroma-0104"],
+      "note": "改写自 Chroma 定位（像 SQLite、开箱即用、嵌入式优先），无原文关键词"
+    },
+    {
+      "id": "q14",
+      "type": "semantic",
+      "text": "Agent 长任务崩溃重启后，怎么避免重复扣款？",
+      "gold": ["flow-control-0024", "flow-control-0025", "flow-control-0051"],
+      "note": "改写自幂等章节：重复扣款、幂等键/先查后写/状态机、检查点不保证副作用一次"
+    },
+    {
+      "id": "q15",
+      "type": "semantic",
+      "text": "怎么让用户看到模型答案是从哪份资料的哪一段来的？",
+      "gold": ["kb-rag-0032", "rag-total-0058", "rag-total-0063"],
+      "note": "改写自引用溯源：chunk↔原文映射、来源编号、提示词标编号"
+    },
+    {
+      "id": "q16",
+      "type": "semantic",
+      "text": "用户提问和文档里的用词差得很远，召回不准怎么办？",
+      "gold": ["kb-rag-0026", "kb-rag-0036", "rag-total-0029"],
+      "note": "改写自检索策略取舍与领域失配：混合检索+HyDE、同义改写"
+    },
+    {
+      "id": "q17",
+      "type": "semantic",
+      "text": "手头只有几百页资料，要不要上 GraphRAG？",
+      "gold": ["kb-rag-0034", "rag-total-0098", "retrieval-paradigm-0016"],
+      "note": "改写自判定三步：先数页数、不到 500 页别上"
+    },
+    {
+      "id": "q18",
+      "type": "semantic",
+      "text": "切块的时候怎么保护表格和代码块不被切断？",
+      "gold": ["kb-rag-0006", "kb-rag-0022", "rag-total-0023"],
+      "note": "改写自切分策略：结构感知、表格保护、chunk size/overlap 经验值"
+    },
+    {
+      "id": "q19",
+      "type": "semantic",
+      "text": "多个知识库之间怎么隔离，避免低权限用户问到高权限内容？",
+      "gold": ["kb-rag-0010", "kb-rag-0031", "rag-total-0045"],
+      "note": "改写自多库隔离三种做法：独立 collection/命名空间/元数据字段"
+    },
+    {
+      "id": "q20",
+      "type": "semantic",
+      "text": "粗排召回的结果看起来像但不够准，怎么再提一档？",
+      "gold": ["kb-rag-0028", "rag-total-0052", "kb-rag-0027"],
+      "note": "改写自重排章节：粗排一维 vs 精排二维、RRF+交叉编码器"
+    }
+  ]
+}
