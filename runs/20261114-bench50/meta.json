@@ -1,0 +1,51 @@
+{
+ "time": "2026-11-14T22:19:54",
+ "modes": [
+  "vector",
+  "bm25",
+  "rrf",
+  "rrf_rerank"
+ ],
+ "k_list": [
+  3,
+  5,
+  10
+ ],
+ "top_k": 10,
+ "blocks": 470,
+ "queries": 50,
+ "embed_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+ "rerank_model": "BAAI/bge-reranker-base",
+ "corpus": [
+  {
+   "doc_id": "chroma",
+   "path": "data\\corpus\\chroma.md",
+   "chars": 34544
+  },
+  {
+   "doc_id": "flow-control",
+   "path": "data\\corpus\\flow-control.md",
+   "chars": 11608
+  },
+  {
+   "doc_id": "kb-rag",
+   "path": "data\\corpus\\kb-rag.md",
+   "chars": 10490
+  },
+  {
+   "doc_id": "qdrant",
+   "path": "data\\corpus\\qdrant.md",
+   "chars": 45421
+  },
+  {
+   "doc_id": "rag-total",
+   "path": "data\\corpus\\rag-total.md",
+   "chars": 30646
+  },
+  {
+   "doc_id": "retrieval-paradigm",
+   "path": "data\\corpus\\retrieval-paradigm.md",
+   "chars": 6814
+  }
+ ]
+}

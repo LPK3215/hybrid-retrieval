@@ -19,3 +19,5 @@ runs/*
 !runs/20261114-final-probes/**
 !runs/20261114-embed-probe/
 !runs/20261114-embed-probe/**
+!runs/20261114-bench50/
+!runs/20261114-bench50/**
