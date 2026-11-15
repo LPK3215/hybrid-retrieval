@@ -76,24 +76,30 @@ class HybridRetriever:
         bm25_min_ratio=0.15,
         vector_min=None,
         rerank_top=20,
+        vector_q=None,
     ):
-        """统一入口，返回 list[dict]：block_id / score / rank / source。"""
+        """统一入口，返回 list[dict]：block_id / score / rank / source。
+
+        vector_q：可选，替代 q 作为向量路的查询文本（HyDE 假设文档用）。
+        BM25 与重排仍用原始 q——假设文档是散文体，词面匹配与相关性判定都需要真问题。
+        """
+        vq = vector_q or q
         if mode == "vector":
-            hits = self._vector(q, top_k, vector_min)
+            hits = self._vector(vq, top_k, vector_min)
             return self._fmt(hits, "vector")
         if mode == "bm25":
             hits = self._bm25(q, top_k, bm25_min_ratio)
             return self._fmt(hits, "bm25")
         if mode == "rrf":
             fused = rrf(
-                [self._vector(q, vector_k, vector_min), self._bm25(q, bm25_k, bm25_min_ratio)],
+                [self._vector(vq, vector_k, vector_min), self._bm25(q, bm25_k, bm25_min_ratio)],
                 k=rrf_k,
                 top_n=top_k,
             )
             return self._fmt(fused, "rrf")
         if mode == "rrf_rerank":
             fused = rrf(
-                [self._vector(q, vector_k, vector_min), self._bm25(q, bm25_k, bm25_min_ratio)],
+                [self._vector(vq, vector_k, vector_min), self._bm25(q, bm25_k, bm25_min_ratio)],
                 k=rrf_k,
                 top_n=rerank_top,
             )
