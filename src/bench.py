@@ -16,6 +16,8 @@ from .retriever import HybridRetriever
 MODES = ("vector", "bm25", "rrf", "rrf_rerank")
 # HyDE 伪模式：向量路换假设文档、BM25/重排仍用原 query
 HYDE_MODES = ("hyde_rrf", "hyde_rerank")
+# Contextual Retrieval 伪模式：文档侧 chunk 前置 LLM 定位上下文再向量化
+CTX_MODES = ("ctx_rrf", "ctx_rerank")
 K_LIST = (3, 5, 10)
 
 
@@ -25,11 +27,14 @@ def load_queries(path=None):
     return data["queries"]
 
 
-def run_bench(blocks, queries, modes=MODES, reranker=None, out_dir=None, top_k=10, hyde=False):
+def run_bench(blocks, queries, modes=MODES, reranker=None, out_dir=None, top_k=10,
+              hyde=False, ctx=False):
     """跑一轮对照，返回 (summary, per_query, meta)。
 
     hyde=True 时追加 hyde_rrf / hyde_rerank 两组：向量路查询换成
     LLM 生成的假设文档（src/hyde.py，按 query 缓存），BM25 与重排不变。
+    ctx=True 时追加 ctx_rrf / ctx_rerank 两组：向量索引的文档侧文本前置
+    LLM 定位上下文（src/contextual.py，按 block_id 缓存），BM25/重排/query 不变。
     """
     if out_dir is None:
         ts = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -47,7 +52,20 @@ def run_bench(blocks, queries, modes=MODES, reranker=None, out_dir=None, top_k=1
 
         hyde_map = hyde_mod.bench_hyde_passages([q["text"] for q in queries], workers=8)
 
-    all_modes = list(modes) + (list(HYDE_MODES) if hyde else [])
+    ctx_retr = None
+    if ctx:
+        from . import contextual as ctx_mod
+        from .index import VectorIndex
+
+        contexts = ctx_mod.build_contexts(blocks, workers=24)
+        ctx_blocks = ctx_mod.contextualized_blocks(blocks, contexts)
+        vi_ctx = VectorIndex(collection="corpus_ctx")
+        vi_ctx.reset()
+        vi_ctx.add(ctx_blocks)
+        ctx_retr = HybridRetriever(vi_ctx, retr.bi, reranker=retr.reranker)
+        print(f"[bench] ctx 索引就绪：{vi_ctx.count()} 块（独立 collection corpus_ctx）", flush=True)
+
+    all_modes = list(modes) + (list(HYDE_MODES) if hyde else []) + (list(CTX_MODES) if ctx else [])
     per_query = []
     for i, q in enumerate(queries, 1):
         row = {
@@ -69,6 +87,9 @@ def run_bench(blocks, queries, modes=MODES, reranker=None, out_dir=None, top_k=1
                         q["text"], mode=base, top_k=top_k,
                         vector_q=hyde_map.get(q["text"]),
                     )
+                elif mode in CTX_MODES:
+                    base = "rrf" if mode == "ctx_rrf" else "rrf_rerank"
+                    hits = ctx_retr.search(q["text"], mode=base, top_k=top_k)
                 else:
                     hits = retr.search(q["text"], mode=mode, top_k=top_k)
                 row["results"][mode] = hits
@@ -90,6 +111,7 @@ def run_bench(blocks, queries, modes=MODES, reranker=None, out_dir=None, top_k=1
         "blocks": len(blocks),
         "queries": len(queries),
         "hyde": hyde,
+        "ctx": ctx,
         "embed_model": config.EMBED_MODEL,
         "rerank_model": config.RERANK_MODEL if reranker else None,
         "corpus": corpus.corpus_manifest(),
@@ -125,6 +147,8 @@ def main(argv=None):
     parser.add_argument("--no-rerank", action="store_true", help="跳过重排组")
     parser.add_argument("--hyde", action="store_true",
                         help="追加 hyde_rrf / hyde_rerank 两组（LLM 生成假设文档走向量路）")
+    parser.add_argument("--ctx", action="store_true",
+                        help="追加 ctx_rrf / ctx_rerank 两组（chunk 前置 LLM 定位上下文再向量化）")
     args = parser.parse_args(argv)
 
     blocks = corpus.load_blocks(args.blocks)["blocks"] if args.blocks else corpus.load_blocks()["blocks"]
@@ -132,7 +156,8 @@ def main(argv=None):
     modes = tuple(m for m in MODES if not (m == "rrf_rerank" and args.no_rerank))
     reranker = None if args.no_rerank else config.build_reranker()
     summary, per_query, meta = run_bench(blocks, queries, modes=modes, reranker=reranker,
-                                       out_dir=args.out, top_k=args.top_k, hyde=args.hyde)
+                                       out_dir=args.out, top_k=args.top_k, hyde=args.hyde,
+                                       ctx=args.ctx)
     print_summary(summary)
 
 
